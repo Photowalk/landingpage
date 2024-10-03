@@ -1,24 +1,26 @@
 'use client'
 
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
-import { Points, PointMaterial, Sphere } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Points, PointMaterial } from '@react-three/drei'
 import * as random from 'maath/random/dist/maath-random.esm'
-import { motion, AnimatePresence } from 'framer-motion'
-import * as THREE from 'three'
+import { motion } from 'framer-motion'
+import type * as THREE from 'three'
 
-function StarField(props) {
-  const ref = useRef()
-  const [sphere] = useState(() => random.inSphere(new Float32Array(5000), { radius: 1.5 }))
+function StarField() {
+  const ref = useRef<THREE.Points>(null!)
+  const [sphere] = useState(() => random.inSphere(new Float32Array(5000), { radius: 1.5 }) as Float32Array)
 
   useFrame((state, delta) => {
-    ref.current.rotation.x -= delta / 10
-    ref.current.rotation.y -= delta / 15
+    if (ref.current) {
+      ref.current.rotation.x -= delta / 10
+      ref.current.rotation.y -= delta / 15
+    }
   })
 
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent
           color="#ffa0e0"
@@ -31,91 +33,7 @@ function StarField(props) {
   )
 }
 
-function Earth({ isVisible }) {
-  const earthRef = useRef()
-  const texture = useLoader(THREE.TextureLoader, '/assets/3d/texture_earth.jpg')
-
-  useFrame((state, delta) => {
-    if (earthRef.current) {
-      earthRef.current.rotation.y += delta * 0.2
-    }
-  })
-
-  return (
-    <Sphere ref={earthRef} args={[0.2, 64, 64]} scale={isVisible ? 1 : 0}>
-      <meshStandardMaterial map={texture} />
-    </Sphere>
-  )
-}
-
-function RippleEffect() {
-  const meshRef = useRef()
-  const [ripples, setRipples] = useState([])
-
-  useFrame((state, delta) => {
-    setRipples((prevRipples) =>
-      prevRipples
-        .map((ripple) => ({
-          ...ripple,
-          radius: ripple.radius + delta * 0.5,
-          opacity: ripple.opacity - delta * 0.2,
-        }))
-        .filter((ripple) => ripple.opacity > 0)
-    )
-
-    if (Math.random() < 0.05) {
-      setRipples((prevRipples) => [
-        ...prevRipples,
-        {
-          x: (Math.random() - 0.5) * 2,
-          y: (Math.random() - 0.5) * 2,
-          radius: 0,
-          opacity: 0.5,
-        },
-      ])
-    }
-  })
-
-  return (
-    <mesh ref={meshRef}>
-      <planeGeometry args={[4, 4]} />
-      <shaderMaterial
-        transparent
-        uniforms={{
-          uTime: { value: 0 },
-          uRipples: { value: ripples },
-        }}
-        vertexShader={`
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `}
-        fragmentShader={`
-          uniform float uTime;
-          uniform vec3 uRipples[20];
-          varying vec2 vUv;
-          void main() {
-            vec3 color = vec3(0.0);
-            for (int i = 0; i < 20; i++) {
-              vec2 rippleCenter = uRipples[i].xy;
-              float rippleRadius = uRipples[i].z;
-              float rippleOpacity = uRipples[i].w;
-              float d = distance(vUv, rippleCenter);
-              if (d < rippleRadius && d > rippleRadius - 0.1) {
-                color += vec3(0.1, 0.5, 1.0) * rippleOpacity;
-              }
-            }
-            gl_FragColor = vec4(color, max(max(color.r, color.g), color.b));
-          }
-        `}
-      />
-    </mesh>
-  )
-}
-
-export default function Home() {
+export default function TechLandingPage() {
   const [showHologram, setShowHologram] = useState(false)
 
   return (
@@ -124,19 +42,6 @@ export default function Home() {
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <StarField />
-        <AnimatePresence>
-          {showHologram && (
-            <motion.group
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Earth isVisible={showHologram} />
-              <RippleEffect />
-            </motion.group>
-          )}
-        </AnimatePresence>
       </Canvas>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
       <div className="absolute inset-0 flex items-center justify-center">
