@@ -53,7 +53,7 @@ export default function TechLandingPage() {
         >
           <h1 className="mb-4 text-6xl font-extrabold leading-none tracking-tight text-white md:text-8xl lg:text-9xl">
             <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-              Project X
+              Cyberia the Grand
             </span>
           </h1>
           <p className="mb-8 text-lg font-normal text-gray-300 sm:px-16 lg:text-xl xl:px-48">
